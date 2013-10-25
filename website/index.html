@@ -1,0 +1,276 @@
+<html>
+<head>
+	<script src="http://code.jquery.com/jquery-1.9.1.js"></script>
+	<script src="http://code.jquery.com/ui/1.10.3/jquery-ui.js"></script>
+	<link rel="stylesheet" href="http://code.jquery.com/ui/1.10.3/themes/smoothness/jquery-ui.css" />
+	
+	<style>
+	.slider {
+		margin:5px;
+		margin-left:10px;
+		margin-right:10px;
+	}
+	</style>
+	
+	<script>
+	function loadingStart() {
+		$("#loading").show();
+	};
+	function loadingStop()  {
+		$("#loading").hide();
+	};
+	
+	function makeImage(url, callback)
+	{
+		loadingStart();
+		$.ajax("cgi/makeImage.py?image=" + url, {
+			dataType: "text",
+			accepts: { text: "text/plain;charset=utf-8" },
+			
+			error:   function(jqXHR, textStatus, errorThrown ) { alert(textStatus); },
+			success: function(data,  textStatus, jqXHR) { 
+				loadingStop(); 
+				callback(); 
+				$("#debugout").html(data);
+				/*alert(data);*/
+			}
+		});
+	}
+	
+	
+	function Slider(name, step, defaultValue, max, handler) {
+		this.name = name; this.step = step; this.defaultValue = defaultValue;
+		this.max = max; this.handler = handler;
+		this.lastValue = this.defaultValue;
+	}
+		
+	function resetSlider(slider) 
+	{
+		$("#tb" + slider.name).addClass("slider");
+		
+		$("#tb" + slider.name).slider({ value: slider.defaultValue, min: 0, max: slider.max, step: slider.step, 
+			slide: function( event, ui ) {
+				$("#v" + slider.name).val(ui.value);
+			},
+			stop: function(event, ui) {
+				if (slider.lastValue != ui.value) {
+					slider.lastValue = ui.value;
+					slider.handler(ui.value);
+				}
+			}
+		});
+		
+		$("#v" + slider.name).val(slider.defaultValue);
+	}
+	
+	function onSelectImage(idx)
+	{
+		urlSample = 'sample/img' + idx + '.png';
+		$("#imgSample").attr('src', urlSample);
+		$("#imgSample").attr('alt', urlSample);
+		$("#urlSample").val(urlSample);
+		onCannyChange(0);
+	}
+	
+	function onCannyChange(idx)
+	{
+		sample = sliders[0].lastValue;
+		canny1 = sliders[1].lastValue;
+		canny2 = sliders[2].lastValue;
+		var urlSample = 'canny/img' + sample + '.' + canny1 + '.' + canny2 + '.png';
+		makeImage(urlSample, function() {
+			$("#imgCanny").attr('src', urlSample);
+			$("#imgCanny").attr('alt', urlSample);
+			$("#urlCanny").val(urlSample);
+		});
+		onHoughChange(idx);
+		onMyChange(idx);
+	}
+
+	function onHoughChange(idx)
+	{
+		sample = sliders[0].lastValue;
+		canny1 = sliders[1].lastValue;
+		canny2 = sliders[2].lastValue;
+		hough1 = sliders[3].lastValue;
+		hough2 = sliders[4].lastValue;
+		hough3 = sliders[5].lastValue;
+		var urlSample = 'hough/img' + sample 
+			+ '.' + canny1 
+			+ '.' + canny2 
+			+ '.' + hough1
+			+ '.' + hough2
+			+ '.' + hough3
+			+ '.png';
+		makeImage(urlSample, function() {
+			$("#imgHough").attr('src', urlSample);
+			$("#imgHough").attr('alt', urlSample);
+			$("#urlHough").val(urlSample);
+		});
+
+	}
+
+	function onMyChange(idx)
+	{
+		// TODO: Refactor!
+		sample = sliders[0].lastValue;
+		canny1 = sliders[1].lastValue;
+		canny2 = sliders[2].lastValue;
+		// TODO: rename to not use 'hough'. Minor.
+		hough1 = sliders[6].lastValue;
+		hough2 = sliders[7].lastValue;
+		hough3 = sliders[8].lastValue;
+		var urlSample = 'my/img' + sample 
+			+ '.' + canny1 
+			+ '.' + canny2 
+			+ '.' + hough1
+			+ '.' + hough2
+			+ '.' + hough3
+			+ '.png';
+		makeImage(urlSample, function() {
+			$("#imgMy").attr('src', urlSample);
+			$("#imgMy").attr('alt', urlSample);
+			$("#urlMy").val(urlSample);
+		});
+	}
+	
+	sliders = [
+		new Slider("Select",   1,   0,   7, onSelectImage), 
+		new Slider("Canny1",   5, 200, 255, onCannyChange), 
+		new Slider("Canny2",   5, 200, 255, onCannyChange),
+		new Slider("HoughT",   5,  50, 255, onHoughChange), 
+		new Slider("HoughLen", 5,  50, 255, onHoughChange), 
+		new Slider("HoughGap", 5,  10, 255, onHoughChange),
+		new Slider("MyLen",    1,   5,  20, onMyChange), 
+		new Slider("MyAngle",  1,  15,  20, onMyChange), 
+		new Slider("MySpread", 1,   5,  20, onMyChange)
+	];
+	
+	
+	function resetSliders(skipFirst) 
+	{
+		for (idx in sliders) {
+			if (idx == 0 && skipFirst) { continue; }
+			resetSlider(sliders[idx]);
+		}
+	}
+	
+	$(function() {
+		resetSliders(/*skipFirst=*/false);
+		onSelectImage(0);
+	});
+	</script>	
+</head>
+<body>
+	<a href="#" onclick="$('#readme' ).toggle()">Readme (click to expand)</a>
+	<a href="#" onclick="$('#credits').toggle()">Image credits (click to expand)</a>
+	&nbsp;
+	&nbsp;
+	&nbsp;
+	&nbsp;
+	&nbsp;
+	Contact: <a href="http://www.linkedin.com/in/alexvirodov">
+      
+          <img src="http://s.c.lnkd.licdn.com/scds/common/u/img/webpromo/btn_liprofile_blue_80x15.png" width="80" height="15" border="0" alt="View Alexandr Virodov's profile on LinkedIn">
+        
+    </a>
+
+	<div id="readme" style="display:none; border:1px solid black">
+		<pre>
+README
+This page demonstrates the line detection algorithm I've been working on. As far as I can see, it performs better than Hough
+in most of the cases.
+
+Algorithm description to come later.
+
+Samples:
+
+0 - photo of a chip, many clear lines
+1 - another photo with lines, small and large (difference in scale)
+2 - photo of a building used in OpenCV documentation
+3 - a photo without proper lines (round pebbles)
+4 - aerial view of washington - lines from streets and buildings, some trees, many small details
+5 - demolished house (many intersecting lines)
+6 - PCB photo (poor performance due to relatively poor edge detection)
+7 - render. Clear edges. Boxed design. Many straight lines. Canny should be at 100/100 for best results.
+
+Hough used is OpenCV HoughLinesP(_,_, 1, CV_PI/180, Threshold, MinLen, MaxGap);
+
+		</pre>
+	</div>
+
+	<div id="credits" style="display:none; border:1px solid black">
+		<pre>
+CREDITS
+
+<a href="http://opencv.org/">Open CV</a> - Canny filter, Hough transform, image loading/storing.
+
+For all images that are taken from wikipedia, see link for license details.
+<a href="http://en.wikipedia.org/wiki/File:RUS-IC.JPG">image 0</a> - Wikipedia, Sergei Frolov. License: CreativeCommons, GNU 1.2
+<a href="http://en.wikipedia.org/wiki/File:Metal_movable_type.jpg">image 1</a> - Wikipedia, Willi Heidelbach, CreativeCommons, GNU 1.2
+<a href="http://docs.opencv.org/modules/imgproc/doc/feature_detection.html?highlight=houghlines#houghlines">image 2</a> - OpenCV documentation,  Copyright 2011-2013, opencv dev team
+<a href="http://en.wikipedia.org/wiki/File:Pebbles_on_beach_at_Broulee_-NSW_-Australia-2Jan2009.jpg">image 3</a> - Wikipedia, Steve Shattuck, CreativeCommons
+<a href="http://commons.wikimedia.org/wiki/File:Washington,_D.C._-_2007_aerial_view.jpg">image 4</a> - Wikipedia, Carol M. Highsmith, Public Domain
+<a href="http://en.wikipedia.org/wiki/File:FEMA_-_44359_-_Oklahoma_tornado_destroyed_home.jpg">image 5</a> - Wikipedia, Win Henderson, Public Domain
+<a href="http://en.wikipedia.org/wiki/File:Testpad.JPG">image 6</a> - Wikipedia, Cschirp, CreativeCommons, GNU 1.2
+<a href="http://en.wikipedia.org/wiki/File:Calculator%28MaxwellRender%29.jpg">image 7</a> - Wikipedia, Unknown, Public Domain or other Free license
+		</pre>
+	</div>
+
+	<table border=1 width="1000">
+		<!-- Formatting row -->
+		<tr>
+			<td width="5%"/> <td width="40%"/> <td width="5%"/> <td width="1%"/> <td width="5%"/> <td width="40%"/> <td width="5%"/>
+		</tr>
+		
+	
+		<tr><th colspan="3">Sample</th><td></td><th colspan="3">Canny</th></tr>
+		<tr>
+			<td colspan="3" align="center"><span id="loading" style="display:none">Loading...</span></td> <td></td>
+			<td>Canny1</td><td> <div id="tbCanny1"/> </td> <td><input id="vCanny1" type="text" size="3"/></td>
+		</tr><tr>
+			<td>Sample</td><td> <div id="tbSelect"/> </td> <td><input id="vSelect" type="text" size="3"/></td> <td></td>
+			<td>Canny2</td><td> <div id="tbCanny2"/> </td> <td><input id="vCanny2" type="text" size="3"/></td>
+		</tr>
+		<tr>
+			<td colspan="3" valign="top"> <input type="text" id="urlSample" style="width:100%"/> <td></td>
+			<td colspan="3" valign="top"> <input type="text" id="urlCanny"  style="width:100%"/>
+		</tr><tr>
+			<td colspan="3" valign="top"> <img id="imgSample" style="margin:0px; padding:0px"/></td> <td></td> 
+			<td colspan="3" valign="top"> <img id="imgCanny"  style="margin:0px; padding:0px"/></td>
+		</tr>
+		<tr><td colspan="57">&nbsp;</td></tr>
+
+		<tr><th colspan="3">My algorithm</th><td></td><th colspan="3">Hough</th></tr>
+		<tr>
+			<td>Min Len      </td><td> <div id="tbMyLen"   /> </td> <td><input id="vMyLen"    type="text" size="3"/></td> <td></td>
+			<td>Threshold    </td><td> <div id="tbHoughT"  /> </td> <td><input id="vHoughT"   type="text" size="3"/></td>
+		</tr><tr>
+			<td>AngleT       </td><td> <div id="tbMyAngle" /> </td> <td><input id="vMyAngle"  type="text" size="3"/></td> <td></td>
+			<td>Min Len      </td><td> <div id="tbHoughLen"/> </td> <td><input id="vHoughLen" type="text" size="3"/></td>
+		</tr><tr>
+			<td>SpreadT      </td><td> <div id="tbMySpread"/> </td> <td><input id="vMySpread" type="text" size="3"/></td> <td></td>
+			<td>Max Gap      </td><td> <div id="tbHoughGap"/> </td> <td><input id="vHoughGap" type="text" size="3"/></td>
+		</tr>
+		<tr>
+			<td colspan="3" valign="top"> <input type="text" id="urlMy"    style="width:100%"/> <td></td>
+			<td colspan="3" valign="top"> <input type="text" id="urlHough" style="width:100%"/>
+		</tr><tr>
+			<td colspan="3" valign="top"> <img id="imgMy"    style="margin:0px; padding:0px"/></td> <td></td> 
+			<td colspan="3" valign="top"> <img id="imgHough" style="margin:0px; padding:0px"/></td>
+		</tr>
+	</table>
+
+	<br>
+	<div style="border:1px solid black; display:none">
+		Debug:<br>
+		<pre id="debugout">
+		</pre>
+	</div>
+		
+			
+
+
+</body>
+</html>
+
